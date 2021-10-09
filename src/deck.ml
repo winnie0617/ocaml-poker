@@ -27,7 +27,7 @@ let shuffle (d : deck) =
   (* Remove order after sorting *)
   |> List.map (fun (_, c) -> c)
 
-let rank_of (c:card) : string =
+let rank_of (c : card) : string =
   match fst c with
   | 1 -> "A"
   | 11 -> "J"
@@ -35,7 +35,7 @@ let rank_of (c:card) : string =
   | 13 -> "K"
   | r -> string_of_int r
 
-let suit_of (c:card) : string =
+let suit_of (c : card) : string =
   match snd c with
   | 0 -> "D"
   | 1 -> "C"
@@ -43,5 +43,4 @@ let suit_of (c:card) : string =
   | 3 -> "S"
   | _ -> failwith "Invalid suit"
 
-let card_to_string (c:card) : string =
-  (rank_of c) ^ (suit_of c)
+let card_to_string (c : card) : string = rank_of c ^ suit_of c
