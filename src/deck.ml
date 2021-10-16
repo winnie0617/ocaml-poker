@@ -15,13 +15,13 @@ let empty : deck = []
 
 let push (c : card) (d : deck) = c :: d
 
-let peek = function
+(* let peek = function
   | [] -> raise Empty
   | x :: _ -> x
 
 let pop = function
   | [] -> raise Empty
-  | _ :: s -> s
+  | _ :: s -> s *)
 
 let len (d : deck) = List.length d
 
@@ -34,7 +34,6 @@ let new_deck : deck =
   (* generate all ranks for each suit *)
   [ 0; 1; 2; 3 ] |> List.map (fun s -> all_ranks s) |> List.concat
 
-(* TODO: mutable list? *)
 let draw d =
   match d with
   | [] -> failwith "No more cards"
@@ -48,14 +47,14 @@ let shuffle (d : deck) =
   (* Remove order after sorting *)
   |> List.map (fun (_, c) -> c)
 
-let random_card : card =
+(* let random_card : card =
   let card = (Random.int 13 + 1, Random.int 4) in
-  card
+  card *)
 
-let start_round : deck =
+(* let start_round : deck =
   let card1 = random_card in
   let card2 = random_card in
-  [ card1; card2 ]
+  [ card1; card2 ] *)
 
 let rank_of (c : card) : string =
   match fst c with

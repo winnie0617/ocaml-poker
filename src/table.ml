@@ -3,6 +3,7 @@ type stage =
   | Flop
   | Turn
   | River
+  | Showdown
 
 type t = {
   players : Player.t list;
