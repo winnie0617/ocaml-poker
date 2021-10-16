@@ -1,18 +1,21 @@
 type command =
-| Check
-| Raise
-| Fold
-| Call
+  | Check
+  | RaiseBy of float
+  | Fold
+  | Call
 
 exception Empty
+
 exception Illegal
 
-let parse str =
+let parse str : command =
   let splitstring = String.split_on_char ' ' str in
   let list = List.filter (fun a -> a <> "") splitstring in
   match list with
   | [] -> raise Empty
-  | Check ->
-  | Raise
-  | Fold
-  | Call
+  | h :: t ->
+      if h = "check" then Check
+      else if h = "fold" then Fold
+      else if h = "call" then Call
+      else if h = "raise" then RaiseBy (float_of_string (List.nth t 1))
+      else raise Illegal
