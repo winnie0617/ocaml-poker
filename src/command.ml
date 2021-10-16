@@ -1,6 +1,6 @@
 type command =
 | Check
-| Race
+| Raise
 | Fold
 | Call
 
@@ -13,6 +13,6 @@ let parse str =
   match list with
   | [] -> raise Empty
   | Check ->
-  | Race
+  | Raise
   | Fold
   | Call
