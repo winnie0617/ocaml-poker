@@ -9,7 +9,8 @@ exception Empty
 exception Illegal
 
 let parse str : command =
-  let splitstring = String.split_on_char ' ' str in
+  let lower_str = String.lowercase_ascii str in
+  let splitstring = String.split_on_char ' ' lower_str in
   let list = List.filter (fun a -> a <> "") splitstring in
   match list with
   | [] -> raise Empty
