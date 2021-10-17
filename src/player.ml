@@ -18,7 +18,7 @@ let update_chips (player : t) (amount : int) =
   { player with chips = player.chips - amount }
 
 let update_prev_bet (player : t) (amount : int) =
-  player.prev_bet = amount
+  { player with prev_bet = amount }
 
 let rec get_player id lst =
   match lst with
