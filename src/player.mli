@@ -21,3 +21,4 @@ val get_chips : t -> int
 
 val get_prev_bet : t -> int
 
+val player_string : t -> string

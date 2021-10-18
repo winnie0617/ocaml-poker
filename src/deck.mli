@@ -26,3 +26,5 @@ val shuffle : deck -> deck
 
 (** Prints card *)
 val card_to_string : card -> string 
+
+val cards_to_string : card list -> string

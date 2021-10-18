@@ -30,3 +30,8 @@ let get_cards t = t.cards
 let get_chips t = t.chips
 
 let get_prev_bet t = t.prev_bet
+
+    
+(*TODO: write a better representation. Kinda ugly now*)
+let player_string t : string =
+  "Name: " ^ t.name ^ ", Hand: " ^ Deck.cards_to_string t.cards
