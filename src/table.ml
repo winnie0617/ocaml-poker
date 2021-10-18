@@ -63,7 +63,7 @@ let rec deal_cards (plst : Player.t list) (d : Deck.deck) :
     raises by a The player just acted is appended at the end of the list*)
 let raise (a : int) (t : t) : t =
   let p' =
-    Player.(List.hd t.players |> increase_bet a |> increase_chips a)
+    Player.(List.hd t.players |> increase_bet a |> increase_chips ~-a)
   in
   {
     t with
@@ -76,7 +76,7 @@ let raise (a : int) (t : t) : t =
 let call (t : t) : t =
   let p = List.hd t.players in
   let a = t.curr_max - Player.get_prev_bet p in
-  let p' = Player.(p |> increase_bet a |> increase_chips a) in
+  let p' = Player.(p |> increase_bet a |> increase_chips ~-a) in
   {
     t with
     players = List.tl t.players @ [ p' ];

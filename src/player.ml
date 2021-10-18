@@ -31,7 +31,8 @@ let get_chips t = t.chips
 
 let get_prev_bet t = t.prev_bet
 
-    
 (*TODO: write a better representation. Kinda ugly now*)
 let player_string t : string =
-  "Name: " ^ t.name ^ ", Hand: " ^ Deck.cards_to_string t.cards
+  "Name: " ^ t.name ^ ", Chips:" ^ string_of_int t.chips ^ ", Bet:"
+  ^ string_of_int t.prev_bet ^ ", Cards: "
+  ^ Deck.cards_to_string t.cards
