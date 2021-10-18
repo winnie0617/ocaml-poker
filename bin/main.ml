@@ -18,10 +18,13 @@ let rec add_player acc name_lst : Player.t list =
       let p = Player.new_player (List.length acc) name in
       add_player (p :: acc) rest
 
+(** TODO: need to rewrite this. Currently just a quick implementation to
+    help visualization what's going on*)
 let transition g : game =
   Table.get_players g.table
   |> List.map (fun x -> print_endline (Player.player_string x));
-  print_endline (Deck.cards_to_string (Table.get_deck g.table));
+  print_endline ("Deck: " ^ Deck.cards_to_string (Table.get_deck g.table));
+  print_endline ("Community cards: " ^ Deck.cards_to_string (Table.get_com_cards g.table));
   { g with table = Table.transition g.table }
 
 let rec game_loop g : unit =

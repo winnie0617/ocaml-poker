@@ -14,11 +14,11 @@ let new_player (id : int) (name : string) =
 let add_cards (player : t) (lst : Deck.card list) =
   { player with cards = player.cards @ lst }
 
-let update_chips (player : t) (amount : int) =
-  { player with chips = player.chips - amount }
+let increase_chips (amount : int) (player : t) =
+  { player with chips = player.chips + amount }
 
-let update_prev_bet (player : t) (amount : int) =
-  { player with prev_bet = amount }
+let increase_bet (amount : int) (player : t) =
+  { player with prev_bet = player.prev_bet + amount }
 
 let rec get_player id lst =
   match lst with

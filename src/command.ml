@@ -1,6 +1,6 @@
 type command =
   | Check
-  | RaiseBy of float
+  | RaiseBy of int
   | Fold
   | Call
 
@@ -18,5 +18,19 @@ let parse str : command =
       if h = "check" then Check
       else if h = "fold" then Fold
       else if h = "call" then Call
-      else if h = "raise" then RaiseBy (float_of_string (List.nth t 1))
+      else if h = "raise" then RaiseBy (int_of_string (List.nth t 1))
       else raise Illegal
+
+let in_to_cmd input : command option =
+  try Some (parse input) with
+  | e -> None
+
+let rec get_cmd () : command =
+  print_string "Enter a command (specify what is valid\n";
+  print_string "> ";
+  match in_to_cmd (read_line ()) with
+  | None ->
+      print_endline " ";
+      print_endline "Invalid input. Please try again.\n";
+      get_cmd ()
+  | Some cmd -> cmd
