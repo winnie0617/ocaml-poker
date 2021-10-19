@@ -29,10 +29,15 @@ let get_cards t = t.cards
 
 let get_chips t = t.chips
 
+let get_name t = t.name
+
 let get_prev_bet t = t.prev_bet
+
+let set_name (player : t) (name : string) = { player with name }
 
 (*TODO: write a better representation. Kinda ugly now*)
 let player_string t : string =
   "Name: " ^ t.name ^ ", Chips:" ^ string_of_int t.chips ^ ", Bet:"
-  ^ string_of_int t.prev_bet ^ ", Cards: "
+  ^ string_of_int t.prev_bet
+  ^ ", Cards: "
   ^ Deck.cards_to_string t.cards

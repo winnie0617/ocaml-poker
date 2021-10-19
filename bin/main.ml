@@ -23,8 +23,11 @@ let rec add_player acc name_lst : Player.t list =
 let transition g : game =
   Table.get_players g.table
   |> List.map (fun x -> print_endline (Player.player_string x));
-  print_endline ("Deck: " ^ Deck.cards_to_string (Table.get_deck g.table));
-  print_endline ("Community cards: " ^ Deck.cards_to_string (Table.get_com_cards g.table));
+  print_endline
+    ("Deck: " ^ Deck.cards_to_string (Table.get_deck g.table));
+  print_endline
+    ("Community cards: "
+    ^ Deck.cards_to_string (Table.get_com_cards g.table));
   { g with table = Table.transition g.table }
 
 let rec game_loop g : unit =
@@ -38,17 +41,37 @@ let rec game_loop g : unit =
 
 let play_game g : unit = game_loop g
 
+let rec make_n_players n acc : Player.t list =
+  let intn = int_of_string n in
+  if intn = 1 then Player.new_player 1 "" :: acc
+  else
+    make_n_players
+      (string_of_int (intn - 1))
+      (Player.new_player intn "" :: acc)
+
+let rec make_n_names n acc =
+  match n with
+  | [] -> acc
+  | h :: t ->
+      print_endline "Please enter the name of the Player.\n";
+      let user_name = read_line () in
+      make_n_names t (Player.set_name h user_name :: acc)
+
+let print_blinds (table : Table.t) =
+  let bb = Table.get_big_blind table in
+  let sb = Table.get_small_blind table in
+  print_endline (Player.get_name bb ^ " is the Big Blind\n");
+  print_endline (Player.get_name sb ^ " is the Small Blind\n")
+
 let main () =
-  ANSITerminal.print_string [ ANSITerminal.red ]
+  ANSITerminal.print_string [ ANSITerminal.yellow ]
     "\n\nWelcome to OCaml Poker.\n";
   print_endline "Please enter the number of players.\n";
-  let n = 3 in
-  print_endline "Please enter the names of the players.\n";
-  let t =
-    [ "Yilun"; "Fionna"; "Winnie" ] |> add_player [] |> Table.init
-  in
+  let n = make_n_players (read_line ()) [] in
+  let players = make_n_names n [] in
+  let t = Table.init players in
   let g = { table = t; active = true } in
-
+  print_blinds t;
   game_loop g
 
 (* Execute the game engine. *)

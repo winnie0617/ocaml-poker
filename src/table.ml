@@ -27,6 +27,14 @@ let get_deck t : Deck.deck = t.deck
 
 let get_com_cards t : Deck.card list = t.com_cards
 
+let get_big_blind t =
+  let bb = t.big_blind in
+  Player.get_player bb t.players
+
+let get_small_blind t =
+  let sb = t.small_blind in
+  Player.get_player sb t.players
+
 let init (plst : Player.t list) : t =
   {
     players = plst;
@@ -80,8 +88,7 @@ let call (t : t) : t =
   {
     t with
     players = List.tl t.players @ [ p' ];
-    pot = t.pot + a;
-    (* num_p_checked = t.num_p_checked + 1; *)
+    pot = t.pot + a (* num_p_checked = t.num_p_checked + 1; *);
   }
 (* TODO: does # of p checked change?*)
 
@@ -110,10 +117,8 @@ let rec betting_loop (t : t) : t =
         | RaiseBy a -> betting_loop (raise a t)
       end
 
-let preflop t : t =
-  let sb = Player.get_player t.small_blind t.players in
-  let bb = Player.get_player t.big_blind t.players in
-  t
+(*let set_blinds t : t = let sb = Player.get_player t.small_blind
+  t.players in let bb = Player.get_player t.big_blind t.players in t*)
 
 (* let action (p:Player.t) (c:Command.command) : p = match command
    with *)
@@ -133,20 +138,21 @@ let transition t : t =
         { t with com_cards = t.com_cards @ [ c1; c2; c3 ]; deck = d3 }
         |> betting_loop
       in
-      { t' with stage = Turn ; num_p_checked = 0 } (*reset check count*)
+      { t' with stage = Turn; num_p_checked = 0 }
+      (*reset check count*)
   | Turn ->
       let c1, d1 = Deck.draw t.deck in
       let t' =
         { t with com_cards = t.com_cards @ [ c1 ]; deck = d1 }
         |> betting_loop
       in
-      { t' with stage = River ; num_p_checked = 0 }
+      { t' with stage = River; num_p_checked = 0 }
   | River ->
       let c1, d1 = Deck.draw t.deck in
       let t' =
         { t with com_cards = t.com_cards @ [ c1 ]; deck = d1 }
         |> betting_loop
       in
-      { t' with stage = Showdown ; num_p_checked = 0 }
+      { t' with stage = Showdown; num_p_checked = 0 }
   | Showdown -> { t with stage = End } (*TODO*)
   | End -> failwith "Game had ended"
