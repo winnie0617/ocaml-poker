@@ -92,12 +92,26 @@ let call (t : t) : t =
   }
 (* TODO: does # of p checked change?*)
 
+let rec preflop_updates (players : Player.t list) (t : t) =
+  let bb = get_big_blind t in
+  let sb = get_small_blind t in
+  match players with
+  | [] -> []
+  | h :: tail ->
+      if h = sb then
+        let h1 = Player.increase_bet t.min_bet h in
+        let h2 = Player.increase_chips (-1 * t.min_bet) h1 in
+        h2 :: preflop_updates tail t
+      else if h = bb then
+        let h1 = Player.increase_bet (t.min_bet * 2) h in
+        let h2 = Player.increase_chips (-2 * t.min_bet) h1 in
+        h2 :: preflop_updates tail t
+      else h :: preflop_updates tail t
+
 let rec betting_loop (t : t) : t =
   (* Check if stage is preflop. If so handle differently*)
   if t.stage = Preflop then
-    let sb = get_small_blind t in
-    let bb = get_big_blind t in
-    Player.increase_bet t.min_bet sb
+    { t with players = preflop_updates t.players t }
   else if t.num_p_checked = List.length t.players then t
     (* everyone checked -> done!*)
   else

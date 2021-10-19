@@ -60,8 +60,8 @@ let rec make_n_names n acc =
 let print_blinds (table : Table.t) =
   let bb = Table.get_big_blind table in
   let sb = Table.get_small_blind table in
-  print_endline (Player.get_name bb ^ " is the Big Blind\n");
-  print_endline (Player.get_name sb ^ " is the Small Blind\n")
+  print_endline (Player.get_name sb ^ " is the Small Blind\n");
+  print_endline (Player.get_name bb ^ " is the Big Blind\n")
 
 let main () =
   ANSITerminal.print_string [ ANSITerminal.yellow ]
