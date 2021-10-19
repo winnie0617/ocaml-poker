@@ -94,7 +94,11 @@ let call (t : t) : t =
 
 let rec betting_loop (t : t) : t =
   (* Check if stage is preflop. If so handle differently*)
-  if t.num_p_checked = List.length t.players then t
+  if t.stage = Preflop then
+    let sb = get_small_blind t in
+    let bb = get_big_blind t in
+    Player.increase_bet t.min_bet sb
+  else if t.num_p_checked = List.length t.players then t
     (* everyone checked -> done!*)
   else
     match t.players with
