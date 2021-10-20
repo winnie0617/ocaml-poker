@@ -19,12 +19,12 @@ finalcheck:
 	@bash check.sh final
 
 zip:
-	rm -f adventure.zip
-	zip -r adventure.zip . -x@exclude.lst
+	rm -f ocaml-poker.zip
+	zip -r ocaml-poker.zip . -x@exclude.lst
 
 clean:
 	dune clean
-	rm -f adventure.zip
+	rm -f ocaml-poker.zip
 
 doc:
 	dune build @doc
