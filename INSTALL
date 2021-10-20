@@ -1,1 +1,2 @@
-Start the game by typing `make play` in the terminal
+In terminal, navigate to directory of game and type `dune build`
+Start the game by typing `make play`
