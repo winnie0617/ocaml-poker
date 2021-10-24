@@ -28,12 +28,10 @@ let get_deck t : Deck.deck = t.deck
 let get_com_cards t : Deck.card list = t.com_cards
 
 let get_big_blind t =
-  let bb = t.big_blind in
-  Player.get_player bb t.players
+  List.nth t.players t.big_blind
 
 let get_small_blind t =
-  let sb = t.small_blind in
-  Player.get_player sb t.players
+  List.nth t.players t.small_blind
 
 let init (plst : Player.t list) : t =
   {
@@ -41,8 +39,8 @@ let init (plst : Player.t list) : t =
     pot = 0;
     deck = Deck.new_deck;
     stage = Preflop;
-    small_blind = 1;
-    big_blind = 2;
+    small_blind = 0; (*list index*)
+    big_blind = 1;
     com_cards = [];
     min_bet = 2;
     curr_max = 0;
@@ -92,6 +90,8 @@ let call (t : t) : t =
   }
 (* TODO: does # of p checked change?*)
 
+(** [preflop_updates players t] is the list of players in the same order
+    but with forced bets from big blind and small blind*)
 let rec preflop_updates (players : Player.t list) (t : t) =
   let bb = get_big_blind t in
   let sb = get_small_blind t in
@@ -108,11 +108,21 @@ let rec preflop_updates (players : Player.t list) (t : t) =
         h2 :: preflop_updates tail t
       else h :: preflop_updates tail t
 
+      (** Rearrange list such that list starts with the player right after s*)
+let set_order t (players : Player.t list) =
+  if t.big_blind = 0 then List.tl players @ [List.hd players] else 
+  (** move fist n element in lst to acc*)
+  let rec split n acc lst =
+    if n = List.length acc then (acc, lst) else
+    match lst with 
+    | [] -> failwith "Empty List"
+    | h::t -> split n (acc @ [h]) t
+    in
+    let fst, snd = split (t.big_blind+1) [] players in
+    snd @ fst     
+
 let rec betting_loop (t : t) : t =
-  (* Check if stage is preflop. If so handle differently*)
-  if t.stage = Preflop then
-    { t with players = preflop_updates t.players t }
-  else if t.num_p_checked = List.length t.players then t
+  if t.num_p_checked = List.length t.players then t
     (* everyone checked -> done!*)
   else
     match t.players with
@@ -146,8 +156,17 @@ let transition t : t =
   | Preflop ->
       let d' = Deck.shuffle t.deck in
       let plst, d = deal_cards t.players d' in
-      let t' = { t with players = plst; deck = d } |> betting_loop in
-      { t' with stage = Flop }
+      let t' = { t with players = plst; deck = d } in
+      let t'' =
+        (* Forced bets*)
+        {
+          t' with
+          players = preflop_updates t.players t |> set_order t;
+          pot = t.pot + (t.min_bet * 3);
+        }
+        |> betting_loop
+      in
+      { t'' with stage = Flop }
   | Flop ->
       let c1, d1 = Deck.draw t.deck in
       let c2, d2 = Deck.draw d1 in
