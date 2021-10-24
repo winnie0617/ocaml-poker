@@ -118,8 +118,8 @@ let rec betting_loop (t : t) : t =
     match t.players with
     (* TODO: placeholders *)
     | [] -> failwith "No players"
-    | [] -> failwith "You are the only player left. You won"
     | curr :: rest -> begin
+        print_endline ("It is " ^ Player.get_name curr ^ "'s turn");
         match Command.get_cmd () with
         | Fold ->
             (* remove that player, who is head of the list*)

@@ -10,4 +10,4 @@ type ratings =
 |One_Pair
 |High_Card
 
-let compare (players:Player.t list) (com_cards:Deck.card list)=
+(* let compare (players:Player.t list) (com_cards:Deck.card list)= *)
