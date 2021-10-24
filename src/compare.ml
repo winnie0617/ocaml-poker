@@ -1,13 +1,24 @@
 type ratings =
-|Royal_Straight_Flush
-|Straight_Flush
-|Four_Of_A_Kind
-|Full_House
-|Flush
-|Straight
-|Three_Of_A_Kind
-|Two_Pair
-|One_Pair
-|High_Card
+  | RoyalStraightFlush
+  | StraightFlush
+  | FourOfAKind
+  | FullHouse
+  | Flush
+  | Straight
+  | ThreeOfAKind
+  | TwoPair
+  | OnePair
+  | HighCard
 
-let compare (players:Player.t list) (com_cards:Deck.card list)=
+exception Empty
+
+let compare_helper (player : Player.t) (com_cards : Deck.card list) =
+  let cards = Player.get_cards player @ com_cards in
+  match cards with
+  | [] -> raise Empty
+  | h :: t -> 
+
+let compare (players : Player.t list) (com_cards : Deck.card list) =
+  match players with
+  | [] -> []
+  | h :: t -> compare_helper h com_cards
