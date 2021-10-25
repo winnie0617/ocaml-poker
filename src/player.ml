@@ -25,6 +25,7 @@ let rec get_player id lst =
   | [] -> raise Illegal
   | h :: t -> if h.id = id then h else get_player id t
 
+let get_id t = t.id
 let get_cards t = t.cards
 
 let get_chips t = t.chips

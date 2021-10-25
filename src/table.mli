@@ -4,6 +4,8 @@ val get_players : t -> Player.t list
 
 val get_deck : t -> Deck.deck
 
+val get_pot : t -> int
+
 val get_com_cards : t -> Deck.card list
 
 val init : Player.t list -> t

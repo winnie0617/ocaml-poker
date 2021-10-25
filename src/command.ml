@@ -35,3 +35,4 @@ let rec get_cmd () : command =
       print_endline "Invalid input. Please try again.\n";
       get_cmd ()
   | Some cmd -> cmd
+

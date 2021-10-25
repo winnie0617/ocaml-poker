@@ -27,11 +27,13 @@ let get_deck t : Deck.deck = t.deck
 
 let get_com_cards t : Deck.card list = t.com_cards
 
-let get_big_blind t =
-  List.nth t.players t.big_blind
+let get_big_blind t : Player.t = Player.get_player t.big_blind t.players
 
-let get_small_blind t =
-  List.nth t.players t.small_blind
+let get_small_blind t  : Player.t = Player.get_player t.small_blind t.players
+
+let is_big_blind t p = Player.get_id p = t.big_blind
+
+let get_pot t = t.pot
 
 let init (plst : Player.t list) : t =
   {
@@ -39,8 +41,8 @@ let init (plst : Player.t list) : t =
     pot = 0;
     deck = Deck.new_deck;
     stage = Preflop;
-    small_blind = 0; (*list index*)
-    big_blind = 1;
+    small_blind = 2;
+    big_blind = 1; (*Player index is inverse order*)
     com_cards = [];
     min_bet = 2;
     curr_max = 0;
@@ -108,18 +110,66 @@ let rec preflop_updates (players : Player.t list) (t : t) =
         h2 :: preflop_updates tail t
       else h :: preflop_updates tail t
 
-      (** Rearrange list such that list starts with the player right after s*)
-let set_order t (players : Player.t list) =
-  if t.big_blind = 0 then List.tl players @ [List.hd players] else 
-  (** move fist n element in lst to acc*)
-  let rec split n acc lst =
-    if n = List.length acc then (acc, lst) else
-    match lst with 
-    | [] -> failwith "Empty List"
-    | h::t -> split n (acc @ [h]) t
-    in
-    let fst, snd = split (t.big_blind+1) [] players in
-    snd @ fst     
+(** Rearrange list such that list starts with the player right after s*)
+let rec set_order (t : t) (players : Player.t list) =
+  match players with
+  | [] -> []
+  | curr :: rest ->
+      if is_big_blind t curr then rest @ [ curr ]
+      else begin print_endline ("Not yet");
+      set_order t (rest @ [ curr ]) end
+(* let set_order2 t (players : Player.t list) = if t.big_blind = 0 then
+   List.tl players @ [ List.hd players ] else (* move fist n element in
+   lst to acc*) let rec split n acc lst = if n = List.length acc then
+   (acc, lst) else match lst with | [] -> failwith "Empty List" | h :: t
+   -> split n (acc @ [ h ]) t in let fst, snd = split (t.big_blind + 1)
+   [] players in snd @ fst *)
+
+(** [legal_lst p t] is the list of string of allowed commands*)
+let legal_lst p t : string list =
+  (* Only big blind can check in preflop*)
+  if t.stage = Preflop && not (is_big_blind t p) then
+    [ "call"; "raise by n"; "fold" ] (* When need to match max bet*)
+  else if Player.get_prev_bet p < t.curr_max then
+    [ "call"; "raise by n"; "fold" ]
+  else [ "check"; "raise by n"; "fold" ]
+
+let rec get_legal_cmd (p : Player.t) (t : t) : Command.command =
+  let cmd_string cmd =
+    match cmd with
+    | Command.Fold -> "fold"
+    | Check -> "check"
+    | Call -> "call"
+    | RaiseBy a -> "raise by n"
+  in
+  let cmd = Command.get_cmd () in
+  let lst = legal_lst p t in
+  if List.mem (cmd_string cmd) lst then cmd
+  else begin
+    print_endline (cmd_string cmd ^ " is not allowed");
+    get_legal_cmd p t
+  end
+
+(** Prompts player to type in command until it is a legal action*)
+let rec get_legal_cmd2 (p : Player.t) (t : t) : Command.command =
+  match Command.get_cmd () with
+  | Fold -> Fold
+  | Call -> Call
+  | Check ->
+      if t.stage = Preflop then
+        print_endline
+          "You cannot check preflop. Please either raise, call or fold.";
+      get_legal_cmd2 p t
+  | RaiseBy a ->
+      if a >= t.curr_max then Command.RaiseBy a
+      else begin
+        print_endline
+          ("You have to place a bet that is higher than the current \
+            minimum bet, ."
+          ^ string_of_int t.curr_max
+          ^ ", by at least double.");
+        get_legal_cmd2 p t
+      end
 
 let rec betting_loop (t : t) : t =
   if t.num_p_checked = List.length t.players then t
@@ -130,7 +180,7 @@ let rec betting_loop (t : t) : t =
     | [] -> failwith "No players"
     | curr :: rest -> begin
         print_endline ("It is " ^ Player.get_name curr ^ "'s turn");
-        match Command.get_cmd () with
+        match get_legal_cmd curr t with
         | Fold ->
             (* remove that player, who is head of the list*)
             betting_loop { t with players = rest }

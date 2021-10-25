@@ -28,6 +28,7 @@ let transition g : game =
   print_endline
     ("Community cards: "
     ^ Deck.cards_to_string (Table.get_com_cards g.table));
+  print_endline ("Pot: " ^ string_of_int (Table.get_pot g.table));
   { g with table = Table.transition g.table }
 
 let rec game_loop g : unit =
