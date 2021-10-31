@@ -16,7 +16,6 @@ type t = {
   com_cards : Deck.card list;
   min_bet : int;
   curr_max : int;
-  num_p_checked : int;
 }
 
 let get_players t : Player.t list = t.players
@@ -29,7 +28,8 @@ let get_com_cards t : Deck.card list = t.com_cards
 
 let get_big_blind t : Player.t = Player.get_player t.big_blind t.players
 
-let get_small_blind t  : Player.t = Player.get_player t.small_blind t.players
+let get_small_blind t : Player.t =
+  Player.get_player t.small_blind t.players
 
 let is_big_blind t p = Player.get_id p = t.big_blind
 
@@ -42,11 +42,11 @@ let init (plst : Player.t list) : t =
     deck = Deck.new_deck;
     stage = Preflop;
     small_blind = 2;
-    big_blind = 1; (*Player index is inverse order*)
+    big_blind = 1;
+    (*Player index is inverse order*)
     com_cards = [];
     min_bet = 2;
-    curr_max = 0;
-    num_p_checked = 0;
+    curr_max = -1 (* -1 when no one has acted*);
   }
 
 let rec deal_cards (plst : Player.t list) (d : Deck.deck) :
@@ -76,9 +76,8 @@ let raise (a : int) (t : t) : t =
   {
     t with
     players = List.tl t.players @ [ p' ];
-    pot = t.pot + a;
+    (* pot = t.pot + a; *)
     curr_max = Player.get_prev_bet p';
-    num_p_checked = 1;
   }
 
 let call (t : t) : t =
@@ -87,10 +86,8 @@ let call (t : t) : t =
   let p' = Player.(p |> increase_bet a |> increase_chips ~-a) in
   {
     t with
-    players = List.tl t.players @ [ p' ];
-    pot = t.pot + a (* num_p_checked = t.num_p_checked + 1; *);
+    players = List.tl t.players @ [ p' ] (* pot = t.pot + a ; *);
   }
-(* TODO: does # of p checked change?*)
 
 (** [preflop_updates players t] is the list of players in the same order
     but with forced bets from big blind and small blind*)
@@ -116,14 +113,7 @@ let rec set_order (t : t) (players : Player.t list) =
   | [] -> []
   | curr :: rest ->
       if is_big_blind t curr then rest @ [ curr ]
-      else begin print_endline ("Not yet");
-      set_order t (rest @ [ curr ]) end
-(* let set_order2 t (players : Player.t list) = if t.big_blind = 0 then
-   List.tl players @ [ List.hd players ] else (* move fist n element in
-   lst to acc*) let rec split n acc lst = if n = List.length acc then
-   (acc, lst) else match lst with | [] -> failwith "Empty List" | h :: t
-   -> split n (acc @ [ h ]) t in let fst, snd = split (t.big_blind + 1)
-   [] players in snd @ fst *)
+      else set_order t (rest @ [ curr ])
 
 (** [legal_lst p t] is the list of string of allowed commands*)
 let legal_lst p t : string list =
@@ -171,9 +161,27 @@ let rec get_legal_cmd2 (p : Player.t) (t : t) : Command.command =
         get_legal_cmd2 p t
       end
 
+(** [collect_bet t n] is the updated table with players' bets collected
+    and put into pot*)
+let rec collect_bet (t : t) : t =
+  let total =
+    List.fold_left ( + ) 0 (List.map Player.get_prev_bet t.players)
+  in
+  let p_lst =
+    List.map
+      (fun p -> Player.(increase_bet (-get_prev_bet p) p))
+      t.players
+  in
+  { t with pot = t.pot + total; players = p_lst }
+
 let rec betting_loop (t : t) : t =
-  if t.num_p_checked = List.length t.players then t
-    (* everyone checked -> done!*)
+  t.players
+  |> List.map (fun x -> print_endline (Player.player_string x));
+  if
+    (* Checks if everyone matches max bet, if so, collect all bets*)
+    List.map (fun p -> Player.get_prev_bet p = t.curr_max) t.players
+    |> List.fold_left (fun a b -> a && b) true
+  then collect_bet t
   else
     match t.players with
     (* TODO: placeholders *)
@@ -185,25 +193,16 @@ let rec betting_loop (t : t) : t =
             (* remove that player, who is head of the list*)
             betting_loop { t with players = rest }
         | Call -> betting_loop (call t)
-        | Check ->
-            betting_loop
-              {
-                t with
-                players = rest @ [ curr ];
-                num_p_checked = t.num_p_checked + 1;
-              }
+        | Check -> betting_loop { t with players = rest @ [ curr ] }
         | RaiseBy a -> betting_loop (raise a t)
       end
-
-(*let set_blinds t : t = let sb = Player.get_player t.small_blind
-  t.players in let bb = Player.get_player t.big_blind t.players in t*)
-
-(* let action (p:Player.t) (c:Command.command) : p = match command
-   with *)
 
 let transition t : t =
   match t.stage with
   | Preflop ->
+      print_endline
+        "=========================== Preflop \
+         ===========================";
       let d' = Deck.shuffle t.deck in
       let plst, d = deal_cards t.players d' in
       let t' = { t with players = plst; deck = d } in
@@ -212,12 +211,23 @@ let transition t : t =
         {
           t' with
           players = preflop_updates t.players t |> set_order t;
-          pot = t.pot + (t.min_bet * 3);
+          curr_max = t.min_bet * 2;
         }
         |> betting_loop
       in
-      { t'' with stage = Flop }
+      {
+        t'' with
+        stage = Flop;
+        curr_max = -1;
+        players =
+          List.map
+            (fun p -> Player.(increase_bet (-get_prev_bet p) p))
+            t''.players;
+      }
   | Flop ->
+      print_endline
+        "============================= Flop \
+         =============================";
       let c1, d1 = Deck.draw t.deck in
       let c2, d2 = Deck.draw d1 in
       let c3, d3 = Deck.draw d2 in
@@ -225,21 +235,47 @@ let transition t : t =
         { t with com_cards = t.com_cards @ [ c1; c2; c3 ]; deck = d3 }
         |> betting_loop
       in
-      { t' with stage = Turn; num_p_checked = 0 }
+      {
+        t' with
+        stage = Turn;
+        curr_max = -1;
+        players =
+          List.map
+            (fun p -> Player.(increase_bet (-get_prev_bet p) p))
+            t'.players;
+      }
       (*reset check count*)
   | Turn ->
+      print_endline
+        "============================= Turn \
+         =============================";
       let c1, d1 = Deck.draw t.deck in
       let t' =
         { t with com_cards = t.com_cards @ [ c1 ]; deck = d1 }
         |> betting_loop
       in
-      { t' with stage = River; num_p_checked = 0 }
+      {
+        t' with
+        stage = River;
+        curr_max = -1;
+        players =
+          List.map
+            (fun p -> Player.(increase_bet (-get_prev_bet p) p))
+            t'.players;
+      }
   | River ->
+      print_endline
+        "============================= River \
+         =============================";
       let c1, d1 = Deck.draw t.deck in
       let t' =
         { t with com_cards = t.com_cards @ [ c1 ]; deck = d1 }
         |> betting_loop
       in
-      { t' with stage = Showdown; num_p_checked = 0 }
-  | Showdown -> { t with stage = End } (*TODO*)
-  | End -> failwith "Game had ended"
+      { t' with stage = Showdown; curr_max = 0 }
+  | Showdown ->
+      print_endline
+        "=========================== Showdown \
+         ===========================";
+      { t with stage = End } (*TODO*)
+  | End -> failwith "Game has ended"
