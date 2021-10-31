@@ -205,17 +205,17 @@ let transition t : t =
          ===========================";
       let d' = Deck.shuffle t.deck in
       let plst, d = deal_cards t.players d' in
-      let t' = { t with players = plst; deck = d } in
-      let t'' =
+      let t = { t with players = plst; deck = d } in
+      let t' =
         (* Forced bets*)
         {
-          t' with
+          t with
           players = preflop_updates t.players t |> set_order t;
           curr_max = t.min_bet * 2;
         }
         |> betting_loop
       in
-      { t'' with stage = Flop }
+      { t' with stage = Flop }
   | Flop ->
       print_endline
         "============================= Flop \
