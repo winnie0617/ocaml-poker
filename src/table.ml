@@ -66,8 +66,6 @@ let rec deal_cards (plst : Player.t list) (d : Deck.deck) :
       let h', d_final = deal_h h d' in
       (h' :: plst', d_final)
 
-(* let place_com_card (n:int) (t:t) : t = *)
-
 (** [raise a t] is the updated table after the first player on the list
     raises by a The player just acted is appended at the end of the list*)
 let raise (a : int) (t : t) : t =
@@ -87,7 +85,7 @@ let call (t : t) : t =
   let p' = Player.(p |> increase_bet a |> increase_chips ~-a) in
   {
     t with
-    players = List.tl t.players @ [ p' ] (* pot = t.pot + a ; *);
+    players = List.tl t.players @ [ p' ];
     num_acted = t.num_acted + 1;
   }
 
