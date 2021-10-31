@@ -12,13 +12,105 @@ type ratings =
 
 exception Empty
 
-let compare_helper (player : Player.t) (com_cards : Deck.card list) =
-  let cards = Player.get_cards player @ com_cards in
-  match cards with
-  | [] -> raise Empty
-  | h :: t -> 
+type counts = {
+  diamonds : int;
+  clubs : int;
+  hearts : int;
+  spades : int;
+}
 
-let compare (players : Player.t list) (com_cards : Deck.card list) =
-  match players with
+(*From 99 Problems in OCaml*)
+let slice list i k =
+  let rec take n = function
+    | [] -> []
+    | h :: t -> if n = 0 then [] else h :: take (n - 1) t
+  in
+  let rec drop n = function
+    | [] -> []
+    | h :: t as l -> if n = 0 then l else drop (n - 1) t
+  in
+  take (k - i + 1) (drop i list)
+
+let rec subtract_consecutive combolist =
+  match combolist with
   | [] -> []
-  | h :: t -> compare_helper h com_cards
+  | h :: t ->
+      List.map (fun x -> x - List.hd h) h :: subtract_consecutive t
+
+let rec check_consecutive combolist =
+  match combolist with
+  | [] -> false
+  | h :: t ->
+      if h = [ 0; 1; 2; 3; 4 ] || h = [ 0; 9; 10; 11; 12 ] then true
+      else check_consecutive t
+
+let check_straight (ranks : int list) =
+  let sorted_ranks = List.sort compare ranks in
+  let list1 = slice sorted_ranks 0 4 in
+  let list2 = slice sorted_ranks 1 5 in
+  let list3 = slice sorted_ranks 2 6 in
+  let combolist = [ list1; list2; list3 ] in
+  let sub = subtract_consecutive combolist in
+  check_consecutive sub
+
+let rec count_suits (suits : int list) (counts : counts) : counts =
+  let c = counts in
+  match suits with
+  | [] -> c
+  | x :: t ->
+      if x = 0 then count_suits t { c with diamonds = c.diamonds + 1 }
+      else if x = 1 then count_suits t { c with clubs = c.clubs + 1 }
+      else if x = 2 then count_suits t { c with hearts = c.hearts + 1 }
+      else count_suits t { c with spades = c.spades + 1 }
+
+(* let rec count_ranks (rank: int list) (counts:counts):counts = *)
+
+let check_flush cards =
+  let suits = List.map (fun x -> snd x) cards in
+  let (counts : counts) =
+    { diamonds = 0; clubs = 0; hearts = 0; spades = 0 }
+  in
+  let result_counts = count_suits suits counts in
+  result_counts.clubs >= 5
+  || result_counts.diamonds >= 5
+  || result_counts.hearts >= 5
+  || result_counts.spades >= 5
+
+let check_royal cards (a : int) =
+  let suit_cards = List.filter (fun x -> snd x = a) cards in
+  let suit_ranks = List.map (fun x -> fst x) suit_cards in
+  let sort_ranks = List.sort compare suit_ranks in
+  List.mem 1 sort_ranks && List.mem 10 sort_ranks
+  && List.mem 11 sort_ranks && List.mem 12 sort_ranks
+  && List.mem 13 sort_ranks
+
+let check_royal_flush cards =
+  if check_flush cards then
+    let suits = List.map (fun x -> snd x) cards in
+    let (counts : counts) =
+      { diamonds = 0; clubs = 0; hearts = 0; spades = 0 }
+    in
+    let result_count = count_suits suits counts in
+    if
+      result_count.diamonds > result_count.clubs
+      && result_count.diamonds > result_count.hearts
+      && result_count.diamonds > result_count.spades
+    then check_royal cards 0
+    else if
+      result_count.clubs > result_count.diamonds
+      && result_count.clubs > result_count.hearts
+      && result_count.clubs > result_count.spades
+    then check_royal cards 1
+    else if
+      result_count.hearts > result_count.diamonds
+      && result_count.hearts > result_count.clubs
+      && result_count.hearts > result_count.spades
+    then check_royal cards 2
+    else check_royal cards 3
+  else false
+
+(* let compare_one (player : Player.t) (com_cards : Deck.card list) =
+   let cards = Player.get_cards player @ com_cards in if
+
+   let compare (players : Player.t list) (com_cards : Deck.card list) =
+   match players with | [] -> [] | h :: t -> compare_one h com_cards *)

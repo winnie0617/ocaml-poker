@@ -15,13 +15,9 @@ let empty : deck = []
 
 let push (c : card) (d : deck) = c :: d
 
-(* let peek = function
-  | [] -> raise Empty
-  | x :: _ -> x
+(* let peek = function | [] -> raise Empty | x :: _ -> x
 
-let pop = function
-  | [] -> raise Empty
-  | _ :: s -> s *)
+   let pop = function | [] -> raise Empty | _ :: s -> s *)
 
 let len (d : deck) = List.length d
 
@@ -47,14 +43,11 @@ let shuffle (d : deck) =
   (* Remove order after sorting *)
   |> List.map (fun (_, c) -> c)
 
-(* let random_card : card =
-  let card = (Random.int 13 + 1, Random.int 4) in
-  card *)
+(* let random_card : card = let card = (Random.int 13 + 1, Random.int 4)
+   in card *)
 
-(* let start_round : deck =
-  let card1 = random_card in
-  let card2 = random_card in
-  [ card1; card2 ] *)
+(* let start_round : deck = let card1 = random_card in let card2 =
+   random_card in [ card1; card2 ] *)
 
 let rank_of (c : card) : string =
   match fst c with
@@ -72,23 +65,22 @@ let suit_of (c : card) : string =
   | 3 -> "S"
   | _ -> failwith "Invalid suit"
 
-  (** TODO: put this in util so every module can use*)
+(** TODO: put this in util so every module can use*)
 let card_to_string (c : card) : string = rank_of c ^ suit_of c
 
 (** [pp_list pp_elt lst] pretty-prints list [lst], using [pp_elt] to
     pretty-print each element of [lst]. *)
-    let pp_list pp_elt lst =
-      let pp_elts lst =
-        let rec loop n acc = function
-          | [] -> acc
-          | [ h ] -> acc ^ pp_elt h
-          | h1 :: (h2 :: t as t') ->
-              if n = 100 then acc ^ "..." (* stop printing long list *)
-              else loop (n + 1) (acc ^ pp_elt h1 ^ "; ") t'
-        in
-        loop 0 "" lst
-      in
-      "[" ^ pp_elts lst ^ "]"
+let pp_list pp_elt lst =
+  let pp_elts lst =
+    let rec loop n acc = function
+      | [] -> acc
+      | [ h ] -> acc ^ pp_elt h
+      | h1 :: (h2 :: t as t') ->
+          if n = 100 then acc ^ "..." (* stop printing long list *)
+          else loop (n + 1) (acc ^ pp_elt h1 ^ "; ") t'
+    in
+    loop 0 "" lst
+  in
+  "[" ^ pp_elts lst ^ "]"
 
-  let cards_to_string c_lst : string = 
-    pp_list card_to_string c_lst
+let cards_to_string c_lst : string = pp_list card_to_string c_lst
