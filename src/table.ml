@@ -138,7 +138,15 @@ let rec get_legal_cmd (p : Player.t) (t : t) : Command.command =
   in
   let cmd = Command.get_cmd () in
   let lst = legal_lst p t in
-  if List.mem (cmd_string cmd) lst then cmd
+  if List.mem (cmd_string cmd) lst then
+    match cmd with
+    | RaiseBy a when a <= t.curr_max ->
+        print_endline
+          ("Current minimum bet is "
+          ^ string_of_int t.curr_max
+          ^ ". Cannot raise by less than that");
+        get_legal_cmd p t
+    | _ -> cmd
   else begin
     print_endline (cmd_string cmd ^ " is not allowed");
     get_legal_cmd p t
