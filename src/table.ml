@@ -44,7 +44,6 @@ let init (plst : Player.t list) : t =
     stage = Preflop;
     small_blind = 2;
     big_blind = 1;
-    (*Player index is inverse order*)
     com_cards = [];
     min_bet = 2;
     curr_max = 0;
@@ -78,7 +77,6 @@ let raise (a : int) (t : t) : t =
   {
     t with
     players = List.tl t.players @ [ p' ];
-    (* pot = t.pot + a; *)
     curr_max = Player.get_prev_bet p';
     num_acted = 1 (* Reset*);
   }
@@ -126,7 +124,7 @@ let legal_lst p t : string list =
     [ "call"; "raise by n"; "fold" ] (* When need to match max bet*)
   else if Player.get_prev_bet p < t.curr_max then
     [ "call"; "raise by n"; "fold" ]
-  else [ "check"; "raise by n";]
+  else [ "check"; "raise by n" ]
 
 let rec get_legal_cmd (p : Player.t) (t : t) : Command.command =
   let cmd_string cmd =
@@ -136,8 +134,9 @@ let rec get_legal_cmd (p : Player.t) (t : t) : Command.command =
     | Call -> "call"
     | RaiseBy a -> "raise by n"
   in
-  let cmd = Command.get_cmd () in
   let lst = legal_lst p t in
+  print_string ("Enter a command. Currently you can: " ^ (Util.pp_list (fun x -> x) lst) ^ "\n");
+  let cmd = Command.get_cmd () in
   if List.mem (cmd_string cmd) lst then
     match cmd with
     | RaiseBy a when a <= t.curr_max - Player.get_prev_bet p ->
