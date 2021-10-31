@@ -144,16 +144,6 @@ let rec get_legal_cmd (p : Player.t) (t : t) : Command.command =
     get_legal_cmd p t
   end
 
-(* * Prompts player to type in command until it is a legal action let
-   rec get_legal_cmd2 (p : Player.t) (t : t) : Command.command = match
-   Command.get_cmd () with | Fold -> Fold | Call -> Call | Check -> if
-   t.stage = Preflop then print_endline "You cannot check preflop.
-   Please either raise, call or fold."; get_legal_cmd2 p t | RaiseBy a
-   -> if a >= t.curr_max then Command.RaiseBy a else begin print_endline
-   ("You have to place a bet that is higher than the current \ minimum
-   bet, ." ^ string_of_int t.curr_max ^ ", by at least double.");
-   get_legal_cmd2 p t end *)
-
 (** [end_betting] is the updated table with players' bets collected and
     put into pot and counters reset*)
 let end_betting (t : t) : t =
@@ -176,13 +166,7 @@ let end_betting (t : t) : t =
 let rec betting_loop (t : t) : t =
   t.players
   |> List.map (fun x -> print_endline (Player.player_string x));
-  if
-    List.length t.players = t.num_acted
-    (* Checks if everyone matches max bet, if so, collect all bets
-       Exception is during preflop, big blind can still act*)
-    (* List.map (fun p -> Player.get_prev_bet p = t.curr_max) t.players
-       |> List.fold_left (fun a b -> a && b) true *)
-  then end_betting t
+  if List.length t.players = t.num_acted then end_betting t
   else
     match t.players with
     (* TODO: placeholders *)
@@ -222,13 +206,7 @@ let transition t : t =
         }
         |> betting_loop
       in
-      {
-        t'' with
-        stage =
-          Flop
-          (* players = List.map (fun p -> Player.(increase_bet
-             (-get_prev_bet p) p)) t''.players; *);
-      }
+      { t'' with stage = Flop }
   | Flop ->
       print_endline
         "============================= Flop \
