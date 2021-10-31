@@ -126,7 +126,7 @@ let legal_lst p t : string list =
     [ "call"; "raise by n"; "fold" ] (* When need to match max bet*)
   else if Player.get_prev_bet p < t.curr_max then
     [ "call"; "raise by n"; "fold" ]
-  else [ "check"; "raise by n"; "fold" ]
+  else [ "check"; "raise by n";]
 
 let rec get_legal_cmd (p : Player.t) (t : t) : Command.command =
   let cmd_string cmd =
@@ -140,11 +140,12 @@ let rec get_legal_cmd (p : Player.t) (t : t) : Command.command =
   let lst = legal_lst p t in
   if List.mem (cmd_string cmd) lst then
     match cmd with
-    | RaiseBy a when a <= t.curr_max ->
+    | RaiseBy a when a <= t.curr_max - Player.get_prev_bet p ->
         print_endline
           ("Current minimum bet is "
           ^ string_of_int t.curr_max
-          ^ ". Cannot raise by less than that");
+          ^ ". You need to raise by more than "
+          ^ string_of_int (t.curr_max - Player.get_prev_bet p));
         get_legal_cmd p t
     | _ -> cmd
   else begin
