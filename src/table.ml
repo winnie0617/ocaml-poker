@@ -16,6 +16,7 @@ type t = {
   com_cards : Deck.card list;
   min_bet : int;
   curr_max : int;
+  num_acted : int;
 }
 
 let get_players t : Player.t list = t.players
@@ -46,7 +47,8 @@ let init (plst : Player.t list) : t =
     (*Player index is inverse order*)
     com_cards = [];
     min_bet = 2;
-    curr_max = -1 (* -1 when no one has acted*);
+    curr_max = 0;
+    num_acted = 0 (* number of players that have acted*);
   }
 
 let rec deal_cards (plst : Player.t list) (d : Deck.deck) :
@@ -78,6 +80,7 @@ let raise (a : int) (t : t) : t =
     players = List.tl t.players @ [ p' ];
     (* pot = t.pot + a; *)
     curr_max = Player.get_prev_bet p';
+    num_acted = 1 (* Reset*);
   }
 
 let call (t : t) : t =
@@ -87,6 +90,7 @@ let call (t : t) : t =
   {
     t with
     players = List.tl t.players @ [ p' ] (* pot = t.pot + a ; *);
+    num_acted = t.num_acted + 1;
   }
 
 (** [preflop_updates players t] is the list of players in the same order
@@ -140,30 +144,19 @@ let rec get_legal_cmd (p : Player.t) (t : t) : Command.command =
     get_legal_cmd p t
   end
 
-(** Prompts player to type in command until it is a legal action*)
-let rec get_legal_cmd2 (p : Player.t) (t : t) : Command.command =
-  match Command.get_cmd () with
-  | Fold -> Fold
-  | Call -> Call
-  | Check ->
-      if t.stage = Preflop then
-        print_endline
-          "You cannot check preflop. Please either raise, call or fold.";
-      get_legal_cmd2 p t
-  | RaiseBy a ->
-      if a >= t.curr_max then Command.RaiseBy a
-      else begin
-        print_endline
-          ("You have to place a bet that is higher than the current \
-            minimum bet, ."
-          ^ string_of_int t.curr_max
-          ^ ", by at least double.");
-        get_legal_cmd2 p t
-      end
+(* * Prompts player to type in command until it is a legal action let
+   rec get_legal_cmd2 (p : Player.t) (t : t) : Command.command = match
+   Command.get_cmd () with | Fold -> Fold | Call -> Call | Check -> if
+   t.stage = Preflop then print_endline "You cannot check preflop.
+   Please either raise, call or fold."; get_legal_cmd2 p t | RaiseBy a
+   -> if a >= t.curr_max then Command.RaiseBy a else begin print_endline
+   ("You have to place a bet that is higher than the current \ minimum
+   bet, ." ^ string_of_int t.curr_max ^ ", by at least double.");
+   get_legal_cmd2 p t end *)
 
-(** [collect_bet t n] is the updated table with players' bets collected
-    and put into pot*)
-let rec collect_bet (t : t) : t =
+(** [end_betting] is the updated table with players' bets collected and
+    put into pot and counters reset*)
+let end_betting (t : t) : t =
   let total =
     List.fold_left ( + ) 0 (List.map Player.get_prev_bet t.players)
   in
@@ -172,16 +165,24 @@ let rec collect_bet (t : t) : t =
       (fun p -> Player.(increase_bet (-get_prev_bet p) p))
       t.players
   in
-  { t with pot = t.pot + total; players = p_lst }
+  {
+    t with
+    pot = t.pot + total;
+    players = p_lst;
+    curr_max = 0;
+    num_acted = 0;
+  }
 
 let rec betting_loop (t : t) : t =
   t.players
   |> List.map (fun x -> print_endline (Player.player_string x));
   if
-    (* Checks if everyone matches max bet, if so, collect all bets*)
-    List.map (fun p -> Player.get_prev_bet p = t.curr_max) t.players
-    |> List.fold_left (fun a b -> a && b) true
-  then collect_bet t
+    List.length t.players = t.num_acted
+    (* Checks if everyone matches max bet, if so, collect all bets
+       Exception is during preflop, big blind can still act*)
+    (* List.map (fun p -> Player.get_prev_bet p = t.curr_max) t.players
+       |> List.fold_left (fun a b -> a && b) true *)
+  then end_betting t
   else
     match t.players with
     (* TODO: placeholders *)
@@ -193,7 +194,13 @@ let rec betting_loop (t : t) : t =
             (* remove that player, who is head of the list*)
             betting_loop { t with players = rest }
         | Call -> betting_loop (call t)
-        | Check -> betting_loop { t with players = rest @ [ curr ] }
+        | Check ->
+            betting_loop
+              {
+                t with
+                players = rest @ [ curr ];
+                num_acted = t.num_acted + 1;
+              }
         | RaiseBy a -> betting_loop (raise a t)
       end
 
@@ -217,12 +224,10 @@ let transition t : t =
       in
       {
         t'' with
-        stage = Flop;
-        curr_max = -1;
-        players =
-          List.map
-            (fun p -> Player.(increase_bet (-get_prev_bet p) p))
-            t''.players;
+        stage =
+          Flop
+          (* players = List.map (fun p -> Player.(increase_bet
+             (-get_prev_bet p) p)) t''.players; *);
       }
   | Flop ->
       print_endline
@@ -235,15 +240,7 @@ let transition t : t =
         { t with com_cards = t.com_cards @ [ c1; c2; c3 ]; deck = d3 }
         |> betting_loop
       in
-      {
-        t' with
-        stage = Turn;
-        curr_max = -1;
-        players =
-          List.map
-            (fun p -> Player.(increase_bet (-get_prev_bet p) p))
-            t'.players;
-      }
+      { t' with stage = Turn }
       (*reset check count*)
   | Turn ->
       print_endline
@@ -254,15 +251,7 @@ let transition t : t =
         { t with com_cards = t.com_cards @ [ c1 ]; deck = d1 }
         |> betting_loop
       in
-      {
-        t' with
-        stage = River;
-        curr_max = -1;
-        players =
-          List.map
-            (fun p -> Player.(increase_bet (-get_prev_bet p) p))
-            t'.players;
-      }
+      { t' with stage = River }
   | River ->
       print_endline
         "============================= River \
