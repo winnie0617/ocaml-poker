@@ -44,6 +44,13 @@ let rec check_consecutive combolist =
       if h = [ 0; 1; 2; 3; 4 ] || h = [ 0; 9; 10; 11; 12 ] then true
       else check_consecutive t
 
+let rec get_cards_of_suit cards (suit : int) =
+  match cards with
+  | [] -> []
+  | h :: t ->
+      if snd h = suit then h :: get_cards_of_suit t suit
+      else get_cards_of_suit t suit
+
 let check_straight (ranks : int list) =
   let sorted_ranks = List.sort compare ranks in
   let list1 = slice sorted_ranks 0 4 in
@@ -108,6 +115,59 @@ let check_royal_flush cards =
     then check_royal cards 2
     else check_royal cards 3
   else false
+
+let check_straight_flush cards =
+  if check_flush cards then
+    let suit_list = List.map (fun x -> snd x) cards in
+    let (counts : counts) =
+      { diamonds = 0; clubs = 0; hearts = 0; spades = 0 }
+    in
+    let result_count = count_suits suit_list counts in
+    if
+      result_count.diamonds > result_count.clubs
+      && result_count.diamonds > result_count.hearts
+      && result_count.diamonds > result_count.spades
+    then
+      check_straight
+        (List.map (fun x -> fst x) (get_cards_of_suit cards 0))
+    else if
+      result_count.clubs > result_count.diamonds
+      && result_count.clubs > result_count.hearts
+      && result_count.clubs > result_count.spades
+    then
+      check_straight
+        (List.map (fun x -> fst x) (get_cards_of_suit cards 1))
+    else if
+      result_count.hearts > result_count.diamonds
+      && result_count.hearts > result_count.clubs
+      && result_count.hearts > result_count.spades
+    then
+      check_straight
+        (List.map (fun x -> fst x) (get_cards_of_suit cards 2))
+    else
+      check_straight
+        (List.map (fun x -> fst x) (get_cards_of_suit cards 3))
+  else false
+
+let insert k lst =
+  if List.mem_assoc k lst then
+    let prev_val = List.assoc k lst in
+    let new_lst = List.remove_assoc k lst in
+    (k, prev_val + 1) :: new_lst
+  else (k, 1) :: lst
+
+let rec make_rank_assoc ranks acc =
+  match ranks with
+  | [] -> acc
+  | h :: t -> make_rank_assoc t (insert h acc)
+
+let check_four cards =
+  let ranks = List.map (fun x -> fst x) cards in
+  let assoc_ranks = make_rank_assoc ranks [] in
+  let ocur_list =
+    List.map (fun x -> List.assoc (fst x) assoc_ranks) assoc_ranks
+  in
+  List.mem 4 ocur_list
 
 (* let compare_one (player : Player.t) (com_cards : Deck.card list) =
    let cards = Player.get_cards player @ com_cards in if
