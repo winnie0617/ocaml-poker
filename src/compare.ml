@@ -161,13 +161,19 @@ let rec make_rank_assoc ranks acc =
   | [] -> acc
   | h :: t -> make_rank_assoc t (insert h acc)
 
-let check_four cards =
+let check_num cards (a : int) =
   let ranks = List.map (fun x -> fst x) cards in
   let assoc_ranks = make_rank_assoc ranks [] in
   let ocur_list =
     List.map (fun x -> List.assoc (fst x) assoc_ranks) assoc_ranks
   in
-  List.mem 4 ocur_list
+  List.mem a ocur_list
+
+let check_four cards = check_num cards 4
+
+let check_full_house cards = check_num cards 3 && check_num cards 2
+
+let check_three cards = check_num cards 3
 
 (* let compare_one (player : Player.t) (com_cards : Deck.card list) =
    let cards = Player.get_cards player @ com_cards in if
