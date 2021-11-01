@@ -161,19 +161,34 @@ let rec make_rank_assoc ranks acc =
   | [] -> acc
   | h :: t -> make_rank_assoc t (insert h acc)
 
-let check_num cards (a : int) =
+let occurance_list cards =
   let ranks = List.map (fun x -> fst x) cards in
   let assoc_ranks = make_rank_assoc ranks [] in
   let ocur_list =
     List.map (fun x -> List.assoc (fst x) assoc_ranks) assoc_ranks
   in
+  ocur_list
+
+let check_num cards (a : int) =
+  let ocur_list = occurance_list cards in
   List.mem a ocur_list
+
+let check_times_occur cards (a : int) =
+  let ocur_list = occurance_list cards in
+  let times_occur_list = make_rank_assoc ocur_list [] in
+  try List.assoc a times_occur_list with
+  | Not_found -> 0
 
 let check_four cards = check_num cards 4
 
 let check_full_house cards = check_num cards 3 && check_num cards 2
 
 let check_three cards = check_num cards 3
+
+let check_two_pair cards =
+  check_times_occur cards 2 = 2 || check_times_occur cards 2 = 3
+
+let check_pair cards = check_num cards 2
 
 (* let compare_one (player : Player.t) (com_cards : Deck.card list) =
    let cards = Player.get_cards player @ com_cards in if
