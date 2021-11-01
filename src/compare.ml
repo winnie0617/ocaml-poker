@@ -1,5 +1,5 @@
 type ratings =
-  | RoyalStraightFlush
+  | RoyalFlush
   | StraightFlush
   | FourOfAKind
   | FullHouse
@@ -190,8 +190,18 @@ let check_two_pair cards =
 
 let check_pair cards = check_num cards 2
 
-(* let compare_one (player : Player.t) (com_cards : Deck.card list) =
-   let cards = Player.get_cards player @ com_cards in if
+let compare_one (player : Player.t) (com_cards : Deck.card list) =
+  let cards = Player.get_cards player @ com_cards in
+  if check_royal_flush cards then RoyalFlush
+  else if check_straight_flush cards then StraightFlush
+  else if check_four cards then FourOfAKind
+  else if check_full_house cards then FullHouse
+  else if check_flush cards then Flush
+  else if check_straight (List.map (fun x -> fst x) cards) then Straight
+  else if check_three cards then ThreeOfAKind
+  else if check_two_pair cards then TwoPair
+  else if check_pair cards then OnePair
+  else HighCard
 
-   let compare (players : Player.t list) (com_cards : Deck.card list) =
+(* let compare (players : Player.t list) (com_cards : Deck.card list) =
    match players with | [] -> [] | h :: t -> compare_one h com_cards *)
