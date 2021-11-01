@@ -26,8 +26,6 @@ let in_to_cmd input : command option =
   | e -> None
 
 let rec get_cmd () : command =
-  print_string
-    "Enter a command. Enter either check, fold, call, or raise by n\n";
   print_string "> ";
   match in_to_cmd (read_line ()) with
   | None ->
@@ -35,3 +33,4 @@ let rec get_cmd () : command =
       print_endline "Invalid input. Please try again.\n";
       get_cmd ()
   | Some cmd -> cmd
+

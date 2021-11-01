@@ -17,6 +17,8 @@ val increase_bet : int -> t -> t
 
 val get_player : int -> t list -> t
 
+val get_id : t -> int
+
 val get_cards : t -> Deck.card list
 
 val get_chips : t -> int
