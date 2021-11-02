@@ -1,6 +1,7 @@
 open OUnit2
 open Game
 open Deck
+open Compare
 
 (** [pp_string s] pretty-prints string [s]. *)
 let pp_string s = "\"" ^ s ^ "\""
@@ -46,9 +47,67 @@ let deck_tests =
   [
     test_same_deck "New deck should have all 52 cards" d full_deck;
     test_same_deck "First card drawn should be AD" [ ad ] "[AD]";
-    test_same_deck "New deck should have everything but AD" draw1 without_ad;
+    test_same_deck "New deck should have everything but AD" draw1
+      without_ad;
   ]
 
-let suite = "test suite for poker" >::: List.flatten [ deck_tests ]
+let check_test name func cards output : test =
+  name >:: fun _ -> assert_equal output (func cards)
+
+let compare_tests =
+  [
+    check_test "test true for check_flush" check_flush
+      [ (5, 0); (7, 0); (8, 0); (10, 0); (13, 0); (1, 1); (2, 1) ]
+      true;
+    check_test "test false for check_flush" check_flush
+      [ (5, 0); (7, 0); (8, 0); (10, 0); (13, 1); (1, 1); (2, 1) ]
+      false;
+    check_test "test true for check_royal_flush" check_royal_flush
+      [ (1, 0); (13, 0); (12, 0); (11, 0); (10, 0); (1, 1); (2, 1) ]
+      true;
+    check_test "test false for check_royal_flush" check_royal_flush
+      [ (5, 0); (7, 0); (8, 0); (10, 0); (13, 1); (1, 1); (2, 1) ]
+      false;
+    check_test "test true for check_straight_flush" check_straight_flush
+      [ (9, 0); (7, 0); (8, 0); (10, 0); (11, 0); (1, 1); (2, 1) ]
+      true;
+    check_test "test false for check_straight_flush"
+      check_straight_flush
+      [ (5, 0); (7, 0); (8, 0); (10, 0); (13, 1); (1, 1); (2, 1) ]
+      false;
+    check_test "test true for check_four" check_four
+      [ (5, 0); (5, 1); (5, 2); (5, 3); (13, 0); (1, 1); (2, 1) ]
+      true;
+    check_test "test false for check_four" check_four
+      [ (5, 0); (7, 0); (8, 0); (10, 0); (13, 1); (1, 1); (2, 1) ]
+      false;
+    check_test "test true for check_full_house" check_full_house
+      [ (5, 0); (5, 1); (5, 2); (10, 0); (10, 1); (1, 1); (2, 1) ]
+      true;
+    check_test "test false for check_full_house" check_full_house
+      [ (5, 0); (7, 0); (8, 0); (10, 0); (13, 1); (1, 1); (2, 1) ]
+      false;
+    check_test "test true for check_three" check_three
+      [ (5, 0); (5, 1); (5, 2); (10, 0); (13, 0); (1, 1); (2, 1) ]
+      true;
+    check_test "test false for check_three" check_three
+      [ (5, 0); (7, 0); (8, 0); (10, 0); (13, 1); (1, 1); (2, 1) ]
+      false;
+    check_test "test true for check_two_pair" check_two_pair
+      [ (5, 0); (5, 1); (8, 0); (8, 1); (13, 0); (1, 1); (2, 1) ]
+      true;
+    check_test "test false for check_two_pair" check_two_pair
+      [ (5, 0); (7, 0); (8, 0); (10, 0); (13, 1); (1, 1); (2, 1) ]
+      false;
+    check_test "test true for check_pair" check_pair
+      [ (5, 0); (5, 1); (8, 0); (8, 1); (13, 0); (1, 1); (2, 1) ]
+      true;
+    check_test "test false for check_pair" check_pair
+      [ (5, 0); (7, 0); (8, 0); (10, 0); (13, 1); (1, 1); (2, 1) ]
+      false;
+  ]
+
+let suite =
+  "test suite for poker" >::: List.flatten [ deck_tests; compare_tests ]
 
 let _ = run_test_tt_main suite
