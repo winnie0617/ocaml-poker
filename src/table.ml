@@ -133,7 +133,10 @@ let rec get_legal_cmd (p : Player.t) (t : t) : Command.command =
     | RaiseBy a -> "raise by n"
   in
   let lst = legal_lst p t in
-  print_string ("Enter a command. Currently you can: " ^ (Util.pp_list (fun x -> x) lst) ^ "\n");
+  print_string
+    ("Enter a command. Currently you can: "
+    ^ Util.pp_list (fun x -> x) lst
+    ^ "\n");
   let cmd = Command.get_cmd () in
   if List.mem (cmd_string cmd) lst then
     match cmd with
@@ -250,5 +253,11 @@ let transition t : t =
       print_endline
         "=========================== Showdown \
          ===========================";
-      { t with stage = End } (*TODO*)
+      let winner = Compare.compare t.players t.com_cards 0 (-1) in
+      print_string
+        ("Winner: "
+        ^ Player.get_name (Player.get_player winner t.players)
+        ^ "\n");
+      { t with stage = End }
+      (*TODO*)
   | End -> failwith "Game has ended"
