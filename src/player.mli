@@ -1,4 +1,10 @@
-type t
+type t = {
+  id : int;
+  name : string;
+  cards : Deck.card list;
+  chips : int;
+  prev_bet : int;
+}
 
 val new_player : int -> string -> t
 (** [new_player str id] initializes a new player by assigning an [id]

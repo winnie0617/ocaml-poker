@@ -2,6 +2,7 @@ open OUnit2
 open Game
 open Deck
 open Compare
+open Player
 
 (** [pp_string s] pretty-prints string [s]. *)
 let pp_string s = "\"" ^ s ^ "\""
@@ -54,6 +55,48 @@ let deck_tests =
 let check_test name func cards output : test =
   name >:: fun _ -> assert_equal output (func cards)
 
+let check_compare_one name player com_cards output : test =
+  name >:: fun _ -> assert_equal output (compare_one player com_cards)
+
+let check_compare name player_list com_cards acc player output : test =
+  name >:: fun _ ->
+  assert_equal output (compare player_list com_cards acc player)
+
+let player1 =
+  {
+    id = 0;
+    name = "yilun";
+    cards = [ (1, 0); (13, 0) ];
+    chips = 200;
+    prev_bet = 0;
+  }
+
+let com_cards_1 = [ (12, 0); (11, 0); (10, 0); (1, 1); (2, 1) ]
+
+let com_cards_2 = [ (8, 0); (10, 0); (13, 0); (1, 1); (2, 1) ]
+
+let com_cards_3 = [ (5, 2); (5, 3); (13, 0); (1, 1); (2, 1) ]
+
+let player2 =
+  {
+    id = 1;
+    name = "fionna";
+    cards = [ (5, 0); (7, 0) ];
+    chips = 200;
+    prev_bet = 0;
+  }
+
+let player3 =
+  {
+    id = 2;
+    name = "winnie";
+    cards = [ (5, 0); (5, 1) ];
+    chips = 200;
+    prev_bet = 0;
+  }
+
+let playerlist = [ player1; player2; player3 ]
+
 let compare_tests =
   [
     check_test "test true for check_flush" check_flush
@@ -105,6 +148,19 @@ let compare_tests =
     check_test "test false for check_pair" check_pair
       [ (5, 0); (7, 0); (8, 0); (10, 0); (13, 1); (1, 1); (2, 1) ]
       false;
+    check_test "test true for check_straight" check_straight
+      [ 6; 7; 8; 9; 5; 1; 1 ] true;
+    check_test "test false for check_pair" check_straight
+      [ 1; 3; 5; 7; 9; 11; 13 ]
+      false;
+    check_compare_one "test for check ratings for one player" player1
+      com_cards_1 RoyalFlush;
+    check_compare_one "test for check ratings for one player" player2
+      com_cards_2 Flush;
+    check_compare_one "test for check ratings for one player" player3
+      com_cards_3 FourOfAKind;
+    check_compare "test for check ratings for multiple players"
+      playerlist com_cards_1 0 (-1) 0;
   ]
 
 let suite =

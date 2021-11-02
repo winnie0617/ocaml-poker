@@ -222,10 +222,11 @@ let rec compare
     acc
     player =
   match players with
-  | [] -> acc
+  | [] -> player
   | h :: t ->
-      if rating_value (compare_one h com_cards) > acc then
-        compare t com_cards
-          (rating_value (compare_one h com_cards))
-          (Player.get_id h)
+      let player_rating_value =
+        rating_value (compare_one h com_cards)
+      in
+      if player_rating_value > acc then
+        compare t com_cards player_rating_value (Player.get_id h)
       else compare t com_cards acc player
