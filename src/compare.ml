@@ -19,6 +19,19 @@ type counts = {
   spades : int;
 }
 
+let rating_value rating =
+  match rating with
+  | RoyalFlush -> 10
+  | StraightFlush -> 9
+  | FourOfAKind -> 8
+  | FullHouse -> 7
+  | Flush -> 6
+  | Straight -> 5
+  | ThreeOfAKind -> 4
+  | TwoPair -> 3
+  | OnePair -> 2
+  | HighCard -> 1
+
 (*From 99 Problems in OCaml*)
 let slice list i k =
   let rec take n = function
@@ -203,5 +216,13 @@ let compare_one (player : Player.t) (com_cards : Deck.card list) =
   else if check_pair cards then OnePair
   else HighCard
 
-(* let compare (players : Player.t list) (com_cards : Deck.card list) =
-   match players with | [] -> [] | h :: t -> compare_one h com_cards *)
+let rec compare
+    (players : Player.t list)
+    (com_cards : Deck.card list)
+    acc =
+  match players with
+  | [] -> acc
+  | h :: t ->
+      if rating_value (compare_one h com_cards) > acc then
+        compare t com_cards (Player.get_id h)
+      else compare t com_cards acc
