@@ -239,4 +239,48 @@ let rec get_compare_list
   | [] -> acc
   | h :: t ->
       get_compare_list t com_cards
-        (rating_value (compare_one h com_cards) :: acc)
+        ((rating_value (compare_one h com_cards), h) :: acc)
+
+let check_highest
+    (players : Player.t list)
+    (com_cards : Deck.card list)
+    acc =
+  let player_results_list = get_compare_list players com_cards [] in
+  let rec max_rating max lst =
+    match lst with
+    | [] -> max
+    | h :: t ->
+        if fst h > fst (List.hd max) then max_rating [ h ] t
+        else if fst h = fst (List.hd max) then max_rating (h :: max) t
+        else max_rating max t
+  in
+  max_rating [ List.hd player_results_list ] player_results_list
+
+let get_winner_cards winner_list (players : Player.t list) (com_cards : Deck.card list) = 
+  let rec get_player_cards acc lst = 
+    match lst with 
+    | [] -> acc
+    | h :: t -> get_player_cards ((h, (Player.get_cards (Player.get_player (snd h) players) @ com_cards)) :: acc) t
+  in 
+  get_player_cards [] winner_list
+
+let get_highest_rank lst max = 
+  match lst with
+  | [] -> 
+  | ()
+
+let break_highcard winner_list (players : Player.t list) (com_cards : Deck.card list) = 
+  let player_and_cards = get_winner_cards winner_list players com_cards in 
+  let rec sole_winner winner lst = 
+    match lst with 
+    | [] -> winner
+    | h :: t -> 
+
+
+let break_tie (players : Player.t list) (com_cards : Deck.card list) acc
+    =
+    let winner_list = check_highest players com_cards [] in 
+    let max_rating = fst (winner_list) in 
+    match max_rating with 
+    | 1 -> break_highcard
+    | _ ->
