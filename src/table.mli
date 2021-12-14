@@ -1,6 +1,16 @@
 type t
 
+type stage =
+  | Preflop
+  | Flop
+  | Turn
+  | River
+  | Showdown
+  | End
 val get_players : t -> Player.t list
+(** [get_players t] is the player list of table t*)
+
+val get_stage : t -> stage
 (** [get_players t] is the player list of table t*)
 
 val get_deck : t -> Deck.deck

@@ -172,10 +172,37 @@ let end_betting (t : t) : t =
     num_acted = 0;
   }
 
+(** [split_pot t] s the updated table with pot emptied and given to
+    winners*)
+let split_pot winner_ids t : t =
+  let t' = end_betting t in
+  let p_lst = t'.players in
+  let amt = t'.pot / List.length winner_ids in
+  let p_lst' =
+    List.map
+      (fun p ->
+        if List.mem (Player.get_id p) winner_ids then
+          Player.increase_chips amt p
+        else p)
+      p_lst
+  in
+  {
+    t' with
+    pot = 0;
+    players = p_lst';
+    curr_max = 0;
+    num_acted = 0;
+    stage = Showdown;
+  }
+
 let rec betting_loop (t : t) : t =
+  print_endline ("Pot: " ^ string_of_int t.pot);
   t.players
   |> List.map (fun x -> print_endline (Player.player_string x));
-  if List.length t.players = t.num_acted then end_betting t
+  (* All other players folded *)
+  if List.length t.players = 1 then
+    split_pot (List.map (fun p -> Player.get_id p) t.players) t
+  else if List.length t.players = t.num_acted then end_betting t
   else
     match t.players with
     (* TODO: placeholders *)
@@ -185,7 +212,12 @@ let rec betting_loop (t : t) : t =
         match get_legal_cmd curr t with
         | Fold ->
             (* remove that player, who is head of the list*)
-            betting_loop { t with players = rest }
+            betting_loop
+              {
+                t with
+                players = rest;
+                pot = t.pot + Player.get_prev_bet curr;
+              }
         | Call -> betting_loop (call t)
         | Check ->
             betting_loop
@@ -199,7 +231,7 @@ let rec betting_loop (t : t) : t =
 
 let transition t : t =
   match t.stage with
-  | Preflop ->
+  | Preflop -> (
       print_endline
         "=========================== Preflop \
          ===========================";
@@ -215,8 +247,10 @@ let transition t : t =
         }
         |> betting_loop
       in
-      { t' with stage = Flop }
-  | Flop ->
+      match t'.stage with
+      | Showdown -> t'
+      | _ -> { t' with stage = Flop })
+  | Flop -> (
       print_endline
         "============================= Flop \
          =============================";
@@ -227,9 +261,11 @@ let transition t : t =
         { t with com_cards = t.com_cards @ [ c1; c2; c3 ]; deck = d3 }
         |> betting_loop
       in
-      { t' with stage = Turn }
-      (*reset check count*)
-  | Turn ->
+      match t'.stage with
+      | Showdown -> t'
+      | _ -> { t' with stage = Turn }
+      (*reset check count*))
+  | Turn -> (
       print_endline
         "============================= Turn \
          =============================";
@@ -238,8 +274,10 @@ let transition t : t =
         { t with com_cards = t.com_cards @ [ c1 ]; deck = d1 }
         |> betting_loop
       in
-      { t' with stage = River }
-  | River ->
+      match t'.stage with
+      | Showdown -> t'
+      | _ -> { t' with stage = River })
+  | River -> (
       print_endline
         "============================= River \
          =============================";
@@ -248,16 +286,22 @@ let transition t : t =
         { t with com_cards = t.com_cards @ [ c1 ]; deck = d1 }
         |> betting_loop
       in
-      { t' with stage = Showdown; curr_max = 0 }
+      match t'.stage with
+      | Showdown -> t'
+      | _ -> { t' with stage = Showdown })
   | Showdown ->
+      let winner = Compare.compare t.players t.com_cards 0 (-1) in
+      (* TODO: wait for determinign multiple winners*)
+      let winners = [ winner ] in
+      let t' = split_pot winners t in
       print_endline
         "=========================== Showdown \
          ===========================";
-      let winner = Compare.compare t.players t.com_cards 0 (-1) in
+
       print_string
         ("Winner: "
         ^ Player.get_name (Player.get_player winner t.players)
         ^ "\n");
-      { t with stage = End }
-      (*TODO*)
+      { t' with stage = End }
+      (*Should never reach here*)
   | End -> failwith "Game has ended"
