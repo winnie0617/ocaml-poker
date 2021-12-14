@@ -230,3 +230,13 @@ let rec compare
       if player_rating_value > acc then
         compare t com_cards player_rating_value (Player.get_id h)
       else compare t com_cards acc player
+
+let rec get_compare_list
+    (players : Player.t list)
+    (com_cards : Deck.card list)
+    acc =
+  match players with
+  | [] -> acc
+  | h :: t ->
+      get_compare_list t com_cards
+        (rating_value (compare_one h com_cards) :: acc)
